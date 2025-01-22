@@ -14,10 +14,20 @@ char **flags = NULL;
 int flagsNum = 0;
 int flagsAllocated = 0;
 
+int flagCompare(const void* l, const void* r)
+{
+  return strcmp((char*)l, (char*) r);
+}
+
 // Array of s_pairs and their values passed to program
 struct s_pair *arguments = NULL;
 int argumentsNum = 0;
 int argumentsAllocated = 0;
+
+int argCompare(const void* l, const void* r)
+{
+  return strcmp(((struct s_pair*)l)->name, ((struct s_pair*)r)->name);
+}
 
 // Array of names and descriptions used for s_pairs and flags for --help
 struct s_pair *helpArguments = NULL;
@@ -25,9 +35,9 @@ int helpArgsNum = 0;
 int helpArgsAllocated = 0;
 
 // Program meta info
-char *pName;
-char *pVersion;
-char *pDescription;
+const char *pName;
+const char *pVersion;
+const char *pDescription;
 
 int isFlag(char *str) {
   if (str && str[0] == '-' && str[1] == '-') {
@@ -63,7 +73,7 @@ void pushArg(char *arg, char *value) {
   arguments[argumentsNum++].value = value;
 }
 
-void adds_pair(char *arg, char *value) {
+void addArg(char *arg, char *value) {
   if (arguments == NULL) {
     arguments = (struct s_pair *)malloc(sizeof(struct argument *));
     argumentsAllocated = 1;
@@ -96,7 +106,7 @@ int parse(int argc, char **argv) {
     if (isFlag(argv[i]) == 0) {
       addFlag(argv[i]);
     } else if (isArg(argv[i]) == 0) {
-      adds_pair(argv[i], argv[i + 1]);
+      addArg(argv[i], argv[i + 1]);
       i++;
     }
   }
@@ -112,4 +122,52 @@ int parse(int argc, char **argv) {
   }
 
   return 0;
+}
+
+int hasFlag(const char* flag)
+{
+  void* result = bsearch(flag, flags, flagsNum, sizeof(char*), flagCompare);
+
+  if (result == NULL)
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
+
+int hasArg(const char* arg)
+{
+  void* result = bsearch(arg, arguments, argumentsNum, sizeof(struct argument*), argCompare);
+
+  if (result == NULL)
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
+char* argValue(const char* arg)
+{
+  void* result = bsearch(arg, arguments, argumentsNum, sizeof(struct argument*), argCompare);
+  return (char*)result;
+}
+
+
+void programHelp(const char* description)
+{
+  pDescription = description;
+}
+
+
+void programName(const char* name)
+{
+  pName = name;
+}
+
+void programVersion(const char* version)
+{
+  pVersion = version;
 }

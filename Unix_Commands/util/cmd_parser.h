@@ -17,7 +17,7 @@ int hasFlag(const char* flag);
 int hasArg(const char* arg);
 
 //Returns passed value for an argument
-const char* argValue(const char* arg);
+char* argValue(const char* arg);
 
 //Sets a string to be displayed about program usage when --help is passed
 void programHelp(const char* description);
@@ -30,5 +30,11 @@ void argHelp(const char* arg, const char* description);
 
 //Sets a string to be displayed about program version when --verions is passed
 void programVersion(const char* version);
+
+//Sets a string for name of the program
+void programName(const char* name);
+
+//Frees up memory
+void cmdCleanUp();
 
 #endif //CMD_PARSER_H
