@@ -108,6 +108,9 @@ int parse(int argc, char **argv) {
       i++;
     }
   }
+  
+  qsort(flags, flagsNum, sizeof(char*), flagCompare);
+  qsort(arguments, argumentsNum, sizeof(struct s_pair*), argCompare);
 
   if (hasFlag("help") == 0) {
     printHelp();
