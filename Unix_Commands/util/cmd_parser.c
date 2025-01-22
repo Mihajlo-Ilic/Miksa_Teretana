@@ -1,8 +1,8 @@
 #include "cmd_parser.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 struct s_pair {
   char *name;
@@ -14,9 +14,8 @@ char **flags = NULL;
 int flagsNum = 0;
 int flagsAllocated = 0;
 
-int flagCompare(const void* l, const void* r)
-{
-  return strcmp((char*)l, (char*) r);
+int flagCompare(const void *l, const void *r) {
+  return strcmp((char *)l, *(char **)r);
 }
 
 // Array of s_pairs and their values passed to program
@@ -24,9 +23,8 @@ struct s_pair *arguments = NULL;
 int argumentsNum = 0;
 int argumentsAllocated = 0;
 
-int argCompare(const void* l, const void* r)
-{
-  return strcmp(((struct s_pair*)l)->name, ((struct s_pair*)r)->name);
+int argCompare(const void *l, const void *r) {
+  return strcmp(((struct s_pair *)l)->name, (*(struct s_pair **)r)->name);
 }
 
 // Array of names and descriptions used for s_pairs and flags for --help
@@ -47,7 +45,7 @@ int isFlag(char *str) {
   return 1;
 }
 
-void pushFlag(char *str) { flags[flagsNum++] = str; }
+void pushFlag(char *str) { flags[flagsNum++] = str + 2; }
 
 void addFlag(char *str) {
   if (flags == NULL) {
@@ -87,7 +85,7 @@ void addArg(char *arg, char *value) {
 }
 
 void printHelp() {
-  printf("Help for %s", pName);
+  printf("Help for %s\n", pName);
   printf("---------");
 
   int len = strlen(pName);
@@ -99,7 +97,7 @@ void printHelp() {
   printf("%s\n", pDescription);
 }
 
-void printVersion() { printf("%s version: %s", pName, pVersion); }
+void printVersion() { printf("%s version: %s\n", pName, pVersion); }
 
 int parse(int argc, char **argv) {
   for (int i = 1; i < argc; i++) {
@@ -111,12 +109,12 @@ int parse(int argc, char **argv) {
     }
   }
 
-  if (hasFlag("help")) {
+  if (hasFlag("help") == 0) {
     printHelp();
     exit(EXIT_SUCCESS);
   }
 
-  if (hasFlag("version")) {
+  if (hasFlag("version") == 0) {
     printVersion();
     exit(EXIT_FAILURE);
   }
@@ -124,50 +122,78 @@ int parse(int argc, char **argv) {
   return 0;
 }
 
-int hasFlag(const char* flag)
-{
-  void* result = bsearch(flag, flags, flagsNum, sizeof(char*), flagCompare);
+int hasFlag(const char *flag) {
+  void *result = bsearch(flag, flags, flagsNum, sizeof(char *), flagCompare);
 
-  if (result == NULL)
-  {
+  if (result == NULL) {
     return 1;
   }
 
   return 0;
 }
 
+int hasArg(const char *arg) {
+  void *result = bsearch(arg, arguments, argumentsNum,
+                         sizeof(struct argument *), argCompare);
 
-int hasArg(const char* arg)
-{
-  void* result = bsearch(arg, arguments, argumentsNum, sizeof(struct argument*), argCompare);
-
-  if (result == NULL)
-  {
+  if (result == NULL) {
     return 1;
   }
 
   return 0;
 }
 
-char* argValue(const char* arg)
-{
-  void* result = bsearch(arg, arguments, argumentsNum, sizeof(struct argument*), argCompare);
-  return (char*)result;
+char *argValue(const char *arg) {
+  void *result = bsearch(arg, arguments, argumentsNum,
+                         sizeof(struct argument *), argCompare);
+  return (char *)result;
 }
 
+void programHelp(const char *description) { pDescription = description; }
 
-void programHelp(const char* description)
+void programName(const char *name) { pName = name; }
+
+void programVersion(const char *version) { pVersion = version; }
+
+void flagHelp(const char* flag, const char* description)
 {
-  pDescription = description;
+  if (helpArguments == NULL)
+  {
+    helpArguments = (struct s_pair*) malloc(sizeof(struct s_pair*));
+    helpArgsAllocated = 1;
+  }
+  else if (helpArgsNum == helpArgsAllocated)
+  {
+    helpArgsAllocated <<= 1;
+    helpArguments = (struct s_pair*) realloc(helpArguments, sizeof(struct s_pair*) * helpArgsAllocated);
+  }
+
+  helpArguments[helpArgsNum].name = flag;
+  helpArguments[helpArgsNum++].value = description;
 }
 
-
-void programName(const char* name)
+void argHelp(const char* arg, const char* description)
 {
-  pName = name;
+  if (helpArguments == NULL)
+  {
+    helpArguments = (struct s_pair*) malloc(sizeof(struct s_pair*));
+    helpArgsAllocated = 1;
+  }
+  else if (helpArgsNum == helpArgsAllocated)
+  {
+    helpArgsAllocated <<= 1;
+    helpArguments = (struct s_pair*) realloc(helpArguments, sizeof(struct s_pair*) * helpArgsAllocated);
+  }
+
+  helpArguments[helpArgsNum].name = arg;
+  helpArguments[helpArgsNum++].value = description;
 }
 
-void programVersion(const char* version)
-{
-  pVersion = version;
+void cmdCleanUp() {
+  if (arguments != NULL)
+    free(arguments);
+  if (flags != NULL)
+    free(flags);
+  if (helpArguments != NULL)
+    free(helpArguments);
 }
