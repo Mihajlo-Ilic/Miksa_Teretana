@@ -19,6 +19,9 @@ int hasArg(const char* arg);
 //Returns passed value for an argument
 char* argValue(const char* arg);
 
+//Returns value of i-th free argument without key
+char* freeArgValue(int i);
+
 //Sets a string to be displayed about program usage when --help is passed
 void programHelp(const char* description);
 

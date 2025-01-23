@@ -18,13 +18,23 @@ int flagCompare(const void *l, const void *r) {
   return strcmp((char *)l, *(char **)r);
 }
 
+int flagCompareSrt(const void *l, const void *r)
+{
+  return strcmp(*(char **)l, *(char **)r);
+}
+
 // Array of s_pairs and their values passed to program
 struct s_pair *arguments = NULL;
 int argumentsNum = 0;
 int argumentsAllocated = 0;
 
 int argCompare(const void *l, const void *r) {
-  return strcmp(((struct s_pair *)l)->name, (*(struct s_pair **)r)->name);
+  return strcmp((char *)l, (*(struct s_pair *)r).name);
+}
+
+int argCompareSrt(const void *l, const void *r)
+{
+  return strcmp((*(struct s_pair *)l).name, (*(struct s_pair *)r).name);
 }
 
 // Array of names and descriptions used for s_pairs and flags for --help
@@ -60,7 +70,7 @@ void addFlag(char *str) {
 }
 
 int isArg(char *str) {
-  if (str && str[0] == '-' && str[1] != '-') {
+  if (str && str[0] == '-') {
     return 0;
   }
   return 1;
@@ -73,11 +83,11 @@ void pushArg(char *arg, char *value) {
 
 void addArg(char *arg, char *value) {
   if (arguments == NULL) {
-    arguments = (struct s_pair *)malloc(sizeof(struct argument *));
+    arguments = (struct s_pair *)malloc(sizeof(struct s_pair));
     argumentsAllocated = 1;
   } else if (argumentsNum == argumentsAllocated) {
     argumentsAllocated <<= 1;
-    arguments = (struct s_pair *)realloc(flags, sizeof(struct argument *) *
+    arguments = (struct s_pair *)realloc(arguments, sizeof(struct s_pair) *
                                                     argumentsAllocated);
   }
 
@@ -101,16 +111,42 @@ void printVersion() { printf("%s version: %s\n", pName, pVersion); }
 
 int parse(int argc, char **argv) {
   for (int i = 1; i < argc; i++) {
-    if (isFlag(argv[i]) == 0) {
+
+    int isCurrentFlag = isFlag(argv[i]);
+    int isCurrentArg = isArg(argv[i]);
+
+    if (isCurrentFlag == 0)
+    {
       addFlag(argv[i]);
-    } else if (isArg(argv[i]) == 0) {
+    } else if (i == argc - 1 && isCurrentArg == 0)
+    {
+      fprintf(stderr, "Argument %s has no matching value\n", argv[i]);
+      cmdCleanUp();
+      exit(EXIT_FAILURE);
+    } else if (isCurrentArg == 0 && isArg(argv[i + 1]) == 0)
+    {
+      fprintf(stderr, "Argument %s has no matching value\n", argv[i]);
+      cmdCleanUp();
+      exit(EXIT_FAILURE);
+    } else if (isCurrentArg == 0)
+    {
       addArg(argv[i], argv[i + 1]);
       i++;
+    } else {
+      addArg("-", argv[i]);
     }
   }
   
-  qsort(flags, flagsNum, sizeof(char*), flagCompare);
-  qsort(arguments, argumentsNum, sizeof(struct s_pair*), argCompare);
+  for (int i = 0; i < argumentsNum; i ++)
+    printf("%s %s\n", arguments[i].name, arguments[i].value);
+
+  printf("------------\n");
+
+  qsort(flags, flagsNum, sizeof(char*), flagCompareSrt);
+  qsort(arguments, argumentsNum, sizeof(struct s_pair), argCompareSrt);
+
+  for (int i = 0; i < argumentsNum; i ++)
+    printf("%s %s\n", arguments[i].name, arguments[i].value);
 
   if (hasFlag("help") == 0) {
     printHelp();
@@ -137,7 +173,7 @@ int hasFlag(const char *flag) {
 
 int hasArg(const char *arg) {
   void *result = bsearch(arg, arguments, argumentsNum,
-                         sizeof(struct argument *), argCompare);
+                         sizeof(struct s_pair), argCompare);
 
   if (result == NULL) {
     return 1;
