@@ -9,11 +9,10 @@ struct s_pair {
   char *value;
 };
 
-struct helpArgument
-{
-  const char* key;
-  const char* value;
-  const char* description;
+struct helpArgument {
+  const char *key;
+  const char *value;
+  const char *description;
 };
 
 // Array of flags passed to program
@@ -57,14 +56,12 @@ const char *pName;
 const char *pVersion;
 const char *pDescription;
 
-void pushExample(const char* cmd, const char* description)
-{
+void pushExample(const char *cmd, const char *description) {
   examples[examplesNum].name = cmd;
   examples[examplesNum++].value = description;
 }
 
-void pushHelpArg(const char* arg, const char* value, const char* description)
-{
+void pushHelpArg(const char *arg, const char *value, const char *description) {
   helpArguments[helpArgsNum].key = arg;
   helpArguments[helpArgsNum].description = description;
   helpArguments[helpArgsNum++].value = value;
@@ -117,45 +114,123 @@ void addArg(char *arg, char *value) {
   pushArg(arg, value);
 }
 
+void printSpaces(int n) {
+  for (int l = 0; l < n; l++) {
+    printf(" ");
+  }
+}
+
+void printUnderScores(int n) {
+  for (int l = 0; l < n; l++) {
+    printf("-");
+  }
+}
+
 void printHelp() {
-  printf("Help for %s\n\n", pName);
+  printf(" Help for %s\n\n", pName);
 
   printf("------DESCRIPTION------\n\n");
   printf(" %s\n\n", pDescription);
 
-  if (helpArgsNum > 0)
-  {
-    printf(" The following table shows flags and arguments that can be passed to program\n");
-    printf(" / in Value column indicates that arg is a flag and should be passed with -- prefix\n");
-    printf(" \%number in Arg column indicates that argument doesn't have a key.\nRather describes its index in free argument order\n\n");
+  if (helpArgsNum > 0) {
+    printf(" The following table shows flags and arguments that can be passed "
+           "to program\n");
+    printf("  / in Value column indicates that arg is a flag and should be "
+           "passed with -- prefix\n");
+    printf("  $number in Arg column indicates that argument doesn't have a "
+           "key.\n  Rather describes its index in free argument order\n\n");
 
     int maxArgLen = strlen(" Arg ");
     int maxDescriptionLen = strlen(" Description ");
     int maxValueLen = strlen(" Value ");
 
-    for (int i = 0; i < helpArgsNum; i++)
-    {
+    for (int i = 0; i < helpArgsNum; i++) {
       int argLen = strlen(helpArguments[i].key) + 2;
       int descriptionLen = strlen(helpArguments[i].description) + 2;
       int valueLen = strlen(helpArguments[i].value) + 2;
 
       maxArgLen = argLen > maxArgLen ? argLen : maxArgLen;
       maxValueLen = valueLen > maxValueLen ? valueLen : maxValueLen;
-      maxDescriptionLen = descriptionLen > maxDescriptionLen ? descriptionLen : maxDescriptionLen;
+      maxDescriptionLen = descriptionLen > maxDescriptionLen
+                              ? descriptionLen
+                              : maxDescriptionLen;
     }
-    
-    for (int i = 0; i < helpArgsNum; i++)
-    {
 
+    int freeSpace = maxArgLen - strlen(" Arg ");
+    int leftPad = freeSpace / 2;
+    int rightPad = freeSpace - leftPad;
+
+    printf(" |");
+    printSpaces(leftPad);
+    printf(" Arg ");
+    printSpaces(rightPad);
+
+    freeSpace = maxValueLen - strlen(" Value ");
+    leftPad = freeSpace / 2;
+    rightPad = freeSpace - leftPad;
+
+    printf(" |");
+    printSpaces(leftPad);
+    printf(" Value ");
+    printSpaces(rightPad);
+
+    freeSpace = maxDescriptionLen - strlen(" Description ");
+    leftPad = freeSpace / 2;
+    rightPad = freeSpace - leftPad;
+
+    printf(" |");
+    printSpaces(leftPad);
+    printf(" Description ");
+    printSpaces(rightPad);
+
+    printf("|\n ");
+    printUnderScores(maxArgLen + maxDescriptionLen + maxValueLen + 6);
+    printf("\n");
+
+    for (int i = 0; i < helpArgsNum; i++) {
+      int argLen = strlen(helpArguments[i].key) + 2;
+      int descriptionLen = strlen(helpArguments[i].description) + 2;
+      int valueLen = strlen(helpArguments[i].value) + 2;
+
+      int freeSpace = maxArgLen - argLen;
+      int leftPad = freeSpace / 2;
+      int rightPad = freeSpace - leftPad;
+
+      printf(" |");
+      printSpaces(leftPad);
+      printf(" %s ", helpArguments[i].key);
+      printSpaces(rightPad);
+
+      freeSpace = maxValueLen - valueLen;
+      leftPad = freeSpace / 2;
+      rightPad = freeSpace - leftPad;
+
+      printf(" |");
+      printSpaces(leftPad);
+      printf(" %s ", helpArguments[i].value);
+      printSpaces(rightPad);
+
+      freeSpace = maxDescriptionLen - descriptionLen;
+      leftPad = freeSpace / 2;
+      rightPad = freeSpace - leftPad;
+
+      printf(" |");
+      printSpaces(leftPad);
+      printf(" %s ", helpArguments[i].description);
+      printSpaces(rightPad);
+
+      printf("|\n ");
+      printUnderScores(maxArgLen + maxDescriptionLen + maxValueLen + 6);
+      printf("\n");
     }
+
+    printf("\n\n");
   }
 
-  if (examplesNum > 0)
-  {
+  if (examplesNum > 0) {
     printf("------EXAMPLES------\n\n");
 
-    for (int i = 0; i < examplesNum; i++)
-    {
+    for (int i = 0; i < examplesNum; i++) {
       printf(" %s\n  %s\n\n", examples[i].value, examples[i].name);
     }
   }
@@ -187,16 +262,8 @@ int parse(int argc, char **argv) {
     }
   }
 
-  for (int i = 0; i < argumentsNum; i++)
-    printf("%s %s\n", arguments[i].name, arguments[i].value);
-
-  printf("------------\n");
-
   qsort(flags, flagsNum, sizeof(char *), flagCompareSrt);
   qsort(arguments, argumentsNum, sizeof(struct s_pair), argCompareSrt);
-
-  for (int i = 0; i < argumentsNum; i++)
-    printf("%s %s\n", arguments[i].name, arguments[i].value);
 
   if (hasFlag("help") == 0) {
     printHelp();
@@ -244,31 +311,56 @@ void programName(const char *name) { pName = name; }
 
 void programVersion(const char *version) { pVersion = version; }
 
-void argHelp(const char *arg, const char* value, const char *description) {
-  if (helpArguments == NULL)
-  {
-    helpArguments = (struct helpArgument*) malloc(sizeof(struct helpArgument));
+void argHelp(const char *arg, const char *value, const char *description) {
+  if (helpArguments == NULL) {
+    helpArguments = (struct helpArgument *)malloc(sizeof(struct helpArgument));
     helpArgsAllocated = 1;
-  }
-  else if (helpArgsNum == helpArgsAllocated)
-  {
+  } else if (helpArgsNum == helpArgsAllocated) {
     helpArgsAllocated <<= 1;
-    helpArguments = (struct helpArgument*) realloc(helpArguments, sizeof(struct helpArgument) * helpArgsAllocated);
+    helpArguments = (struct helpArgument *)realloc(
+        helpArguments, sizeof(struct helpArgument) * helpArgsAllocated);
   }
 
   pushHelpArg(arg, value, description);
 }
 
-void usageExample(const char *cmd, const char* description)
-{
-  if (examples == NULL)
-  {
-    examples = (struct s_pair*) malloc(sizeof(struct s_pair));
+void flagHelp(const char *flag, const char *description) {
+  if (helpArguments == NULL) {
+    helpArguments = (struct helpArgument *)malloc(sizeof(struct helpArgument));
+    helpArgsAllocated = 1;
+  } else if (helpArgsNum == helpArgsAllocated) {
+    helpArgsAllocated <<= 1;
+    helpArguments = (struct helpArgument *)realloc(
+        helpArguments, sizeof(struct helpArgument) * helpArgsAllocated);
+  }
+
+  pushHelpArg(flag, "/", description);
+}
+
+void freeArgHelp(int index, const char *value, const char *description) {
+  if (helpArguments == NULL) {
+    helpArguments = (struct helpArgument *)malloc(sizeof(struct helpArgument));
+    helpArgsAllocated = 1;
+  } else if (helpArgsNum == helpArgsAllocated) {
+    helpArgsAllocated <<= 1;
+    helpArguments = (struct helpArgument *)realloc(
+        helpArguments, sizeof(struct helpArgument) * helpArgsAllocated);
+  }
+
+  char *arg = (char *)malloc(5 * sizeof(char));
+  sprintf(arg, "$%d", index);
+
+  pushHelpArg(arg, value, description);
+}
+
+void usageExample(const char *cmd, const char *description) {
+  if (examples == NULL) {
+    examples = (struct s_pair *)malloc(sizeof(struct s_pair));
     examplesAllocated = 1;
-  } else if (examplesAllocated == examplesNum)
-  {
+  } else if (examplesAllocated == examplesNum) {
     examplesAllocated <<= 1;
-    examples = (struct s_pair*) realloc(examples, sizeof(struct s_pair) * examplesAllocated);
+    examples = (struct s_pair *)realloc(examples, sizeof(struct s_pair) *
+                                                      examplesAllocated);
   }
 
   pushExample(cmd, description);
