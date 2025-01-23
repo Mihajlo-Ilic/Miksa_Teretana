@@ -50,6 +50,38 @@ int main(int argc, char **argv) {
       printf("%s", buffer);
     }
   } else {
+    int lineNumber = 0;
+
+    while (1) {
+      int bytesRead = read(fd, buffer, BUFFER_SIZE);
+
+      if (bytesRead < 0) {
+        perror("Failed while reading from file");
+        exit(EXIT_FAILURE);
+      }
+
+      if (bytesRead == 0) {
+        break;
+      }
+
+      int i = 0;
+      int j = 0;
+      for (; i < bytesRead; i++)
+      {
+        if (buffer[i] == '\n')
+        {
+          buffer[i] = '\0';
+          printf("\n%d: %s", lineNumber++, buffer + j);
+          j = i + 1;
+        }
+      }
+
+      if (j != i)
+      {
+        printf("%s", buffer + j);
+      }
+    }
+
   }
 
   close(fd);
