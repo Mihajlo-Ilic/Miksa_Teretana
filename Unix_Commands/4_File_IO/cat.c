@@ -7,7 +7,10 @@ int main(int argc, char** argv)
   programVersion("1.0");
   programHelp("Prints out the contents of a file passed as an argument");
   
-  flagHelp("n", "Print out the line numbers along with the lines of a file");
+  argHelp("--n", "Print out the line numbers along with the lines of a file");
+
+  usageExample("./cat.o a.txt", "Print out contents of a.txt file");
+  usageExample("./cat.o --n a.txt", "Print out contents and line numbers");
 
   parse(argc, argv);
  

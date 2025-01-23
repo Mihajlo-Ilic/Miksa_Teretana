@@ -25,17 +25,23 @@ char* freeArgValue(int i);
 //Sets a string to be displayed about program usage when --help is passed
 void programHelp(const char* description);
 
-//Sets string to be displayed about a certain flag when --help is passed
+//Information about flag in command section of --help
 void flagHelp(const char* flag, const char* description);
 
 //Sets a string to be displayed about a certain argument when --help is passed
-void argHelp(const char* arg, const char* description);
+void argHelp(const char* arg, const char* value, const char* description);
+
+//Information about argument without a key in command section of --help
+void freeArgHelp(int index, const char* value, const char* description);
 
 //Sets a string to be displayed about program version when --verions is passed
 void programVersion(const char* version);
 
 //Sets a string for name of the program
 void programName(const char* name);
+
+//Sets a string to be displayed in usage section of --help
+void usageExample(const char* cmd, const char* description);
 
 //Frees up memory
 void cmdCleanUp();

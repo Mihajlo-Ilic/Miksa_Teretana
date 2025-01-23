@@ -9,6 +9,13 @@ struct s_pair {
   char *value;
 };
 
+struct helpArgument
+{
+  const char* key;
+  const char* value;
+  const char* description;
+};
+
 // Array of flags passed to program
 char **flags = NULL;
 int flagsNum = 0;
@@ -18,8 +25,7 @@ int flagCompare(const void *l, const void *r) {
   return strcmp((char *)l, *(char **)r);
 }
 
-int flagCompareSrt(const void *l, const void *r)
-{
+int flagCompareSrt(const void *l, const void *r) {
   return strcmp(*(char **)l, *(char **)r);
 }
 
@@ -32,20 +38,37 @@ int argCompare(const void *l, const void *r) {
   return strcmp((char *)l, (*(struct s_pair *)r).name);
 }
 
-int argCompareSrt(const void *l, const void *r)
-{
+int argCompareSrt(const void *l, const void *r) {
   return strcmp((*(struct s_pair *)l).name, (*(struct s_pair *)r).name);
 }
 
 // Array of names and descriptions used for s_pairs and flags for --help
-struct s_pair *helpArguments = NULL;
+struct helpArgument *helpArguments = NULL;
 int helpArgsNum = 0;
 int helpArgsAllocated = 0;
+
+// Array of examples and descriptions
+struct s_pair *examples = NULL;
+int examplesNum = 0;
+int examplesAllocated = 0;
 
 // Program meta info
 const char *pName;
 const char *pVersion;
 const char *pDescription;
+
+void pushExample(const char* cmd, const char* description)
+{
+  examples[examplesNum].name = cmd;
+  examples[examplesNum++].value = description;
+}
+
+void pushHelpArg(const char* arg, const char* value, const char* description)
+{
+  helpArguments[helpArgsNum].key = arg;
+  helpArguments[helpArgsNum].description = description;
+  helpArguments[helpArgsNum++].value = value;
+}
 
 int isFlag(char *str) {
   if (str && str[0] == '-' && str[1] == '-') {
@@ -88,23 +111,54 @@ void addArg(char *arg, char *value) {
   } else if (argumentsNum == argumentsAllocated) {
     argumentsAllocated <<= 1;
     arguments = (struct s_pair *)realloc(arguments, sizeof(struct s_pair) *
-                                                    argumentsAllocated);
+                                                        argumentsAllocated);
   }
 
   pushArg(arg, value);
 }
 
 void printHelp() {
-  printf("Help for %s\n", pName);
-  printf("---------");
+  printf("Help for %s\n\n", pName);
 
-  int len = strlen(pName);
-  for (int i = 0; i < len; i++) {
-    printf("-");
+  printf("------DESCRIPTION------\n\n");
+  printf(" %s\n\n", pDescription);
+
+  if (helpArgsNum > 0)
+  {
+    printf(" The following table shows flags and arguments that can be passed to program\n");
+    printf(" / in Value column indicates that arg is a flag and should be passed with -- prefix\n");
+    printf(" \%number in Arg column indicates that argument doesn't have a key.\nRather describes its index in free argument order\n\n");
+
+    int maxArgLen = strlen(" Arg ");
+    int maxDescriptionLen = strlen(" Description ");
+    int maxValueLen = strlen(" Value ");
+
+    for (int i = 0; i < helpArgsNum; i++)
+    {
+      int argLen = strlen(helpArguments[i].key) + 2;
+      int descriptionLen = strlen(helpArguments[i].description) + 2;
+      int valueLen = strlen(helpArguments[i].value) + 2;
+
+      maxArgLen = argLen > maxArgLen ? argLen : maxArgLen;
+      maxValueLen = valueLen > maxValueLen ? valueLen : maxValueLen;
+      maxDescriptionLen = descriptionLen > maxDescriptionLen ? descriptionLen : maxDescriptionLen;
+    }
+    
+    for (int i = 0; i < helpArgsNum; i++)
+    {
+
+    }
   }
-  printf("\n");
 
-  printf("%s\n", pDescription);
+  if (examplesNum > 0)
+  {
+    printf("------EXAMPLES------\n\n");
+
+    for (int i = 0; i < examplesNum; i++)
+    {
+      printf(" %s\n  %s\n\n", examples[i].value, examples[i].name);
+    }
+  }
 }
 
 void printVersion() { printf("%s version: %s\n", pName, pVersion); }
@@ -115,37 +169,33 @@ int parse(int argc, char **argv) {
     int isCurrentFlag = isFlag(argv[i]);
     int isCurrentArg = isArg(argv[i]);
 
-    if (isCurrentFlag == 0)
-    {
+    if (isCurrentFlag == 0) {
       addFlag(argv[i]);
-    } else if (i == argc - 1 && isCurrentArg == 0)
-    {
+    } else if (i == argc - 1 && isCurrentArg == 0) {
       fprintf(stderr, "Argument %s has no matching value\n", argv[i]);
       cmdCleanUp();
       exit(EXIT_FAILURE);
-    } else if (isCurrentArg == 0 && isArg(argv[i + 1]) == 0)
-    {
+    } else if (isCurrentArg == 0 && isArg(argv[i + 1]) == 0) {
       fprintf(stderr, "Argument %s has no matching value\n", argv[i]);
       cmdCleanUp();
       exit(EXIT_FAILURE);
-    } else if (isCurrentArg == 0)
-    {
+    } else if (isCurrentArg == 0) {
       addArg(argv[i], argv[i + 1]);
       i++;
     } else {
       addArg("-", argv[i]);
     }
   }
-  
-  for (int i = 0; i < argumentsNum; i ++)
+
+  for (int i = 0; i < argumentsNum; i++)
     printf("%s %s\n", arguments[i].name, arguments[i].value);
 
   printf("------------\n");
 
-  qsort(flags, flagsNum, sizeof(char*), flagCompareSrt);
+  qsort(flags, flagsNum, sizeof(char *), flagCompareSrt);
   qsort(arguments, argumentsNum, sizeof(struct s_pair), argCompareSrt);
 
-  for (int i = 0; i < argumentsNum; i ++)
+  for (int i = 0; i < argumentsNum; i++)
     printf("%s %s\n", arguments[i].name, arguments[i].value);
 
   if (hasFlag("help") == 0) {
@@ -172,8 +222,8 @@ int hasFlag(const char *flag) {
 }
 
 int hasArg(const char *arg) {
-  void *result = bsearch(arg, arguments, argumentsNum,
-                         sizeof(struct s_pair), argCompare);
+  void *result =
+      bsearch(arg, arguments, argumentsNum, sizeof(struct s_pair), argCompare);
 
   if (result == NULL) {
     return 1;
@@ -194,38 +244,34 @@ void programName(const char *name) { pName = name; }
 
 void programVersion(const char *version) { pVersion = version; }
 
-void flagHelp(const char* flag, const char* description)
-{
+void argHelp(const char *arg, const char* value, const char *description) {
   if (helpArguments == NULL)
   {
-    helpArguments = (struct s_pair*) malloc(sizeof(struct s_pair*));
+    helpArguments = (struct helpArgument*) malloc(sizeof(struct helpArgument));
     helpArgsAllocated = 1;
   }
   else if (helpArgsNum == helpArgsAllocated)
   {
     helpArgsAllocated <<= 1;
-    helpArguments = (struct s_pair*) realloc(helpArguments, sizeof(struct s_pair*) * helpArgsAllocated);
+    helpArguments = (struct helpArgument*) realloc(helpArguments, sizeof(struct helpArgument) * helpArgsAllocated);
   }
 
-  helpArguments[helpArgsNum].name = flag;
-  helpArguments[helpArgsNum++].value = description;
+  pushHelpArg(arg, value, description);
 }
 
-void argHelp(const char* arg, const char* description)
+void usageExample(const char *cmd, const char* description)
 {
-  if (helpArguments == NULL)
+  if (examples == NULL)
   {
-    helpArguments = (struct s_pair*) malloc(sizeof(struct s_pair*));
-    helpArgsAllocated = 1;
-  }
-  else if (helpArgsNum == helpArgsAllocated)
+    examples = (struct s_pair*) malloc(sizeof(struct s_pair));
+    examplesAllocated = 1;
+  } else if (examplesAllocated == examplesNum)
   {
-    helpArgsAllocated <<= 1;
-    helpArguments = (struct s_pair*) realloc(helpArguments, sizeof(struct s_pair*) * helpArgsAllocated);
+    examplesAllocated <<= 1;
+    examples = (struct s_pair*) realloc(examples, sizeof(struct s_pair) * examplesAllocated);
   }
 
-  helpArguments[helpArgsNum].name = arg;
-  helpArguments[helpArgsNum++].value = description;
+  pushExample(cmd, description);
 }
 
 void cmdCleanUp() {
