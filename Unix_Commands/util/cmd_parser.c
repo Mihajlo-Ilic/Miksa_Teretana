@@ -305,6 +305,21 @@ char *argValue(const char *arg) {
   return (char *)result;
 }
 
+char *freeArgValue(int i) {
+  int currentFreeArg = 0;
+  for (int j = 0; j < argumentsNum; j++) {
+    if (strcmp(arguments[j].name, "-") == 0) {
+      if (currentFreeArg == i) {
+        return arguments[j].value;
+      } else {
+        currentFreeArg++;
+      }
+    }
+  }
+
+  return NULL;
+}
+
 void programHelp(const char *description) { pDescription = description; }
 
 void programName(const char *name) { pName = name; }
