@@ -1,4 +1,7 @@
 
+touch: cmd_parser.o
+			gcc 4_File_IO/touch.c cmd_parser.o -o touch.o
+
 cat:	cmd_parser.o
 			gcc 4_File_IO/cat.c cmd_parser.o -o cat.o
 
