@@ -1,11 +1,15 @@
 #include "../util/cmd_parser.h"
 #include <endian.h>
 #include <fcntl.h>
+#include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <pwd.h>
 #include <time.h>
+#include <grp.h>
 
 int containsChar(char * str, char c)
 {
@@ -66,6 +70,48 @@ int main(int argc, char **argv) {
   char *filter = argValue("filter");
 
   char time[60];
+  char fullPath[PATH_MAX];
+  realpath(filePath, fullPath);
+  printf("File: %s", fullPath);
+
+  if (S_ISBLK(st.st_mode))
+  {
+    printf(" special block file");
+  }
+  else if (S_ISCHR(st.st_mode))
+  {
+    printf(" special character file");
+  }
+  else if (S_ISDIR(st.st_mode))
+  {
+    printf(" directory");
+  }
+  else if (S_ISREG(st.st_mode))
+  {
+    printf(" regular file");
+  }
+  else if (S_ISLNK(st.st_mode))
+  {
+    printf(" symbolic link");
+  }
+  else 
+  {
+    printf("unknown");
+  }
+
+  printf("\n");
+
+  if (noFilter == 1 || containsChar(filter, 'u'))
+  {
+    struct passwd *p = getpwuid(st.st_uid);
+    printf("User: %s %d\n", p->pw_name, st.st_uid);
+  }
+
+  if (noFilter == 1 || containsChar(filter, 'g'))
+  {
+    struct group *g = getgrgid(st.st_gid);
+    printf("Group: %s %d\n", g->gr_name, st.st_gid);
+  }
 
   if (noFilter == 1 || containsChar(filter, 'a') == 0)
   {
@@ -100,6 +146,16 @@ int main(int argc, char **argv) {
   if (noFilter == 1 || containsChar(filter, 's'))
   {
     printf("Size: %d\n", st.st_size);
+  }
+
+  if (noFilter == 1 || containsChar(filter, 'd'))
+  {
+    printf("Device: %d\n", st.st_dev);
+  }
+
+  if (noFilter == 1 || containsChar(filter, 'i'))
+  {
+    printf("iNode: %d\n", st.st_ino);
   }
 
   cmdCleanUp();
