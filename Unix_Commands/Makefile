@@ -1,3 +1,5 @@
+stat: cmd_parser.o
+			gcc 4_File_IO/stat.c cmd_parser.o -o stat.o
 
 touch: cmd_parser.o
 			gcc 4_File_IO/touch.c cmd_parser.o -o touch.o
