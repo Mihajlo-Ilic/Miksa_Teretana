@@ -1,3 +1,6 @@
+dir: cmd_parser.o
+		 gcc 4_File_IO/dir.c cmd_parser.o -o dir.o
+
 stat: cmd_parser.o
 			gcc 4_File_IO/stat.c cmd_parser.o -o stat.o
 
